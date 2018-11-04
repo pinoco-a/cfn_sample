@@ -1,0 +1,26 @@
+Resources:
+  SSHFromG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow ssh from MYIP
+      VpcId: !ImportValue vpcids
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp: !Ref FromIP
+      SecurityGroupEgress:
+      - IpProtocol: -1
+        FromPort: '-1'
+        ToPort: '-1'
+        CidrIp: 0.0.0.0/0
+Outputs:
+  SSHFromG:
+    Value: !Ref SSHFromG
+    Export:
+      Name: !Sub SSHFromG
+
+Parameters: 
+  FromIP: 
+    Type: String
+    Default: 0.0.0.0/0

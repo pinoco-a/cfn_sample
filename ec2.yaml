@@ -1,0 +1,34 @@
+# https://docs.aws.amazon.com/ja_jp/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-instance.html
+# AmazonLinux2(ami-04d3eb2e1993f679b)
+Resources:
+  MyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: "ami-04d3eb2e1993f679b"
+      KeyName: !Ref sshkeyname
+      SubnetId: !ImportValue subpub01
+      InstanceType: "t2.nano"
+      BlockDeviceMappings:
+        - DeviceName: "/dev/xvda"
+          Ebs:
+            VolumeType: "gp2"
+            DeleteOnTermination: "true"
+            VolumeSize: "8"
+      SecurityGroupIds:
+        - !ImportValue SSHFromG
+  EipAssociate:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      EIP: !Ref eipPublicip
+      InstanceId: !Ref MyInstance
+#      PrivateIpAddress: !Ref privateip
+
+Parameters:
+  sshkeyname:
+    Type: String
+    Default: "sample_keyname"
+#  privateip:
+#    Type: String
+  eipPublicip:
+    Type: String
+  

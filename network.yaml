@@ -1,0 +1,165 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+# ------------------------------------------
+# Create vpc
+# https://docs.aws.amazon.com/ja_jp/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html
+# ------------------------------------------
+  cf2vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 172.16.0.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'false'
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: cf2vpc
+
+# ------------------------------------------
+# IGW Attach
+#
+# ------------------------------------------
+  cf2igw:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: cf2igw
+
+  mob:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: cf2vpc
+      InternetGatewayId:
+        Ref: cf2igw
+        
+# ------------------------------------------
+# Create subnet
+# https://docs.aws.amazon.com/ja_jp/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet.html
+# ------------------------------------------
+
+  pub2sub01:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 172.16.0.0/24
+      AvailabilityZone: ap-northeast-1a
+      VpcId:
+        Ref: cf2vpc
+
+      MapPublicIpOnLaunch: 'false'
+      Tags:
+        - Key: Name
+          Value: pub2sub01
+# ------------------------------------------
+
+  prv2sub01:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 172.16.1.0/24
+      AvailabilityZone: ap-northeast-1a
+      VpcId:
+        Ref: cf2vpc
+
+      MapPublicIpOnLaunch: 'false'
+      Tags:
+        - Key: Name
+          Value: prv2sub01
+# ------------------------------------------
+  pub2sub02:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 172.16.2.0/24
+      AvailabilityZone: ap-northeast-1c
+      VpcId:
+        Ref: cf2vpc
+
+      MapPublicIpOnLaunch: 'false'
+      Tags:
+        - Key: Name
+          Value: pub2sub02
+# ------------------------------------------
+  prv2sub02:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: cf2vpc
+
+      AvailabilityZone: ap-northeast-1c
+      CidrBlock: 172.16.3.0/24
+      MapPublicIpOnLaunch: 'false'
+      Tags:
+        - Key: Name
+          Value: prv2sub02
+# ------------------------------------------
+
+  PubRt:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: cf2vpc
+      Tags:
+        - Key: Name
+          Value: Pub-rt
+  PrvRt:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: cf2vpc
+      Tags:
+        - Key: Name
+          Value: Prv-rt
+
+  PubRoute:
+    Type: AWS::EC2::Route
+    DependsOn: cf2igw
+    Properties:
+      RouteTableId:
+        Ref: PubRt
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: cf2igw
+
+  RtAssociate1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: pub2sub01
+      RouteTableId:
+        Ref: PubRt
+
+  RtAssociate2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: pub2sub02
+      RouteTableId:
+        Ref: PubRt
+
+
+  RtAssociate3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: prv2sub01
+      RouteTableId:
+        Ref: PrvRt
+
+  RtAssociate4:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: prv2sub02
+      RouteTableId:
+        Ref: PrvRt
+
+Outputs:
+  cf2vpc:
+    Value: !Ref cf2vpc
+    Export:
+      Name: !Sub vpcids
+
+  pub01:
+    Value: !Ref pub2sub01
+    Export:
+      Name: !Sub subpub01
